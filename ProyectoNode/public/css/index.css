@@ -1,0 +1,165 @@
+        /* Defino el estilo general del cuerpo y la estructura de la página */
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f0f2f5; 
+            display: flex; 
+            height: 100vh;
+        }
+
+        /* Pantalla de login */
+        #login { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            width: 100%; 
+            height: 100vh; 
+            background-color: white; 
+        }
+
+        #login input, #login button { 
+            margin: 10px; 
+            padding: 10px; 
+            width: 80%; 
+            border-radius: 5px; 
+            border: 1px solid #ccc; }
+
+        /* Avatar selection y sus estilos */
+        .avatar { 
+            width: 60px; 
+            height: 70px; 
+            border-radius: 50%; 
+            cursor: pointer;
+            margin: 5px; 
+            border: 2px solid transparent; 
+        }
+
+        .selected { /* Avatar seleccionado se marca con un borde verde */
+            border-color: #25D366; 
+        } 
+
+        #customAvatar { 
+            width: 60px; 
+            height: 70px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: 2px solid #ccc; 
+        }
+
+        /* Estilos del chat */
+        #chat { 
+            display: flex; 
+            width: 100%; 
+            height: 100vh; 
+            display: none; 
+        }
+
+        #userList { 
+            width: 30%; 
+            background: white; 
+            border-right: 1px solid #ccc; 
+            padding: 10px; 
+            overflow-y: auto; 
+        }
+
+        #userList ul { 
+            list-style: none; 
+            padding: 0; 
+        }
+
+        #userList li { 
+            padding: 10px; 
+            display: flex; 
+            align-items: center; 
+            border-bottom: 1px solid #ddd; 
+            cursor: pointer; 
+        }
+
+        #userList img { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            margin-right: 10px; 
+        }
+
+        /* Estilo principal del chat */
+        #mainChat { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: #e5ddd5; 
+        }
+
+        #messages { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        #messages li { 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin: 5px 0; 
+            max-width: 60%; 
+            list-style: none;
+        }
+
+        .my-message {  /* Mensaje mío */
+            background: #dcf8c6; 
+            align-self: flex-end; 
+        } 
+
+        .other-message { /* Mensaje de otro usuario */
+            background: white; 
+            align-self: flex-start; 
+        } 
+
+        /* Input de mensajes y enviar */
+        #messageBox { 
+            display: flex; 
+            padding: 10px; 
+            background: white; 
+            border-top: 1px solid #ccc; 
+        }
+
+        #message { 
+            flex: 1; 
+            padding: 10px; 
+            border-radius: 20px; 
+            border: 1px solid #ccc; 
+        } 
+
+        button { 
+            background: #25D366; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            margin-left: 10px; 
+        }
+
+        /* Mensaje de usuario escribiendo */
+        #typingStatus {
+            display: none;
+            font-style: italic;
+            color: #777;
+            padding: 10px;
+        }
+        
+        /* Estilos para imágenes */
+        #messages img {
+            max-width: 200px;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        /* Enlace de descarga para archivos */
+        #messages a {
+            color: #25D366;
+            text-decoration: none;
+        }

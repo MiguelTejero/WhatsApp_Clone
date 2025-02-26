@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Clone</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <!-- Pantalla de inicio de sesión -->
+    <div id="login">
+        <h2>Iniciar Sesión</h2>
+        <input id="username" type="text" placeholder="Nombre" required>
+        <p>Selecciona un avatar:</p>
+        <div id="avatarSelection">
+            <!-- Avatares predefinidos -->
+            <img src="img/avatar1.png" class="avatar" onclick="selectAvatar('avatar1.png')">
+            <img src="img/avatar2.png" class="avatar" onclick="selectAvatar('avatar2.png')">
+            <img src="img/avatar3.png" class="avatar" onclick="selectAvatar('avatar3.png')">
+            <img src="img/avatar4.png" class="avatar" onclick="selectAvatar('avatar4.png')">
+            <img src="img/avatar5.png" class="avatar" onclick="selectAvatar('avatar5.png')">
+            <img src="img/avatar6.png" class="avatar" onclick="selectAvatar('avatar6.png')">
+        </div>
+        <input type="file" id="fileAvatar" onchange="loadCustomAvatar(event)" accept="image/*"> <!-- Avatar personalizado -->
+        <img id="customAvatar" src="" style="display: none;" />
+        <input id="status" type="text" placeholder="Escribe tu estado" required>
+        <button onclick="registerUser()">Entrar</button>
+    </div>
+    
+    <!-- Interfaz del chat -->
+    <div id="chat">
+        <div id="userList">
+            <h3>Usuarios Conectados</h3>
+            <ul id="users"></ul> <!-- Lista de usuarios -->
+        </div>
+        <div id="mainChat">
+            <ul id="messages"></ul> <!-- Mensajes del chat -->
+            <div id="typingStatus">
+                <em>Está escribiendo...</em>
+            </div>
+            <div id="messageBox">
+                <input id="fileInput" type="file" accept="image/*, .pdf, .docx, .txt" style="display:none;" onchange="handleFileInput(event)">
+                <button onclick="document.getElementById('fileInput').click()">📎</button> <!-- Icono para enviar archivo -->
+                <input id="message" type="text" placeholder="Escribe un mensaje..." oninput="notifyTyping()"> <!-- Mensaje de texto -->
+                <button onclick="sendMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io(); // Establecemos la conexión con el servidor usando Socket.io
+        let username = ""; // Variable para el nombre del usuario
+        let selectedAvatar = ""; // Avatar seleccionado por el usuario
+        let typingTimeout; // Variable para gestionar el tiempo de escritura
+
+        /* Función que selecciona el avatar */
+        function selectAvatar(avatar) {
+            selectedAvatar = "img/" + avatar; // Asignamos la ruta del avatar
+            document.querySelectorAll('.avatar').forEach(img => img.classList.remove('selected')); // Removemos la selección
+            event.target.classList.add('selected'); // Marcamos el avatar seleccionado
+            document.getElementById("customAvatar").style.display = "none"; // Ocultamos el avatar personalizado
+        }
+
+        /* Cargar avatar personalizado desde el archivo */
+        function loadCustomAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedAvatar = e.target.result; // Almacenamos la imagen en base64
+                    document.getElementById("customAvatar").src = selectedAvatar; // Mostramos la imagen cargada
+                    document.getElementById("customAvatar").style.display = "block"; // Hacemos visible el avatar
+                    document.querySelectorAll('.avatar').forEach(img => img.classList.remove('selected')); // Eliminamos la selección de los avatares predeterminados
+                };
+                reader.readAsDataURL(file); // Leemos el archivo como URL base64
+            }
+        }
+
+        /* Función para registrar al usuario */
+        function registerUser() {
+            username = document.getElementById("username").value.trim(); // Tomamos el nombre de usuario
+            let status = document.getElementById("status").value.trim(); // Tomamos el estado
+            if (username && selectedAvatar && status) {
+                document.getElementById("login").style.display = "none"; // Ocultamos la pantalla de login
+                document.getElementById("chat").style.display = "flex"; // Mostramos la interfaz del chat
+                socket.emit("register", { name: username, profilePicUrl: selectedAvatar, status: status }); // Enviamos la información al servidor
+            }
+        }
+
+        /* Función para enviar mensajes */
+        function sendMessage() {
+            let messageInput = document.getElementById("message");
+            let message = messageInput.value.trim();
+            if (message) {
+                socket.emit("sendMessage", { text: message, user: { name: username, profilePicUrl: selectedAvatar } }); // Enviamos el mensaje al servidor
+                messageInput.value = ""; // Limpiamos el campo de mensaje
+            }
+        }
+
+        /* Función para notificar que el usuario está escribiendo */
+        function notifyTyping() {
+            socket.emit("typing", true); // Enviamos el evento de que el usuario está escribiendo
+
+            clearTimeout(typingTimeout); // Limpiamos el temporizador anterior
+            typingTimeout = setTimeout(() => {
+                socket.emit("typing", false); // Detenemos la notificación de "escribiendo"
+            }, 2000);
+        }
+
+        /* Función que maneja la carga de archivos */
+        function handleFileInput(event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    if (file.type.startsWith('image/')) { // Si el archivo es una imagen
+                        socket.emit("sendFile", { file: e.target.result, name: file.name, type: 'image' });
+                    } else {
+                        socket.emit("sendFile", { file: e.target.result, name: file.name, type: 'file' });
+                    }
+                };
+
+                reader.readAsDataURL(file); // Leemos el archivo en base64
+            }
+        }
+
+        /* Recibimos la actualización de los usuarios conectados */
+        socket.on("updateUserList", (users) => {
+            const userList = document.getElementById("users");
+            userList.innerHTML = "";
+            users.forEach(user => {
+                let li = document.createElement("li");
+                li.innerHTML = `
+                    <img src="${user.profilePicUrl}" alt="${user.name}">
+                    <div>
+                        <strong>${user.name}</strong>
+                        <br>
+                        <small>${user.status}</small>
+                    </div>
+                `;
+                userList.appendChild(li); // Agregamos el usuario a la lista
+            });
+        });
+
+        /* Recibimos los mensajes y los mostramos */
+        socket.on("message", (data) => {
+            const messages = document.getElementById("messages");
+            let li = document.createElement("li");
+
+            if (data.system) {
+                li.style.textAlign = "center";
+                li.style.color = "gray";
+                li.innerHTML = `<em>${data.text}</em>`; // Mostramos mensaje de sistema
+            } else {
+                li.classList.add(data.user.name === username ? "my-message" : "other-message");
+                li.innerHTML = `<strong>${data.user.name}</strong>: ${data.text}`;
+            }
+
+            messages.appendChild(li);
+            messages.scrollTop = messages.scrollHeight; // Hacemos scroll al último mensaje
+        });
+
+        /* Recibimos archivos y los mostramos */
+        socket.on("fileMessage", (data) => {
+            const messages = document.getElementById("messages");
+            let li = document.createElement("li");
+
+            if (data.type === 'image') {
+                li.classList.add(data.user.name === username ? "my-message" : "other-message");
+                li.innerHTML = `
+                    <strong>${data.user.name}</strong>: <br>
+                    <img src="${data.file}" style="max-width: 200px; margin: 5px;">
+                    <br><a href="${data.file}" download="${data.name}">Descargar</a>
+                `;
+            } else {
+                li.classList.add(data.user.name === username ? "my-message" : "other-message");
+                li.innerHTML = `
+                    <strong>${data.user.name}</strong>: <br>
+                    <a href="${data.file}" download="${data.name}">Descargar archivo</a>
+                `;
+            }
+
+            messages.appendChild(li);
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        /* Manejamos el estado de "escribiendo..." */
+        socket.on("typing", (data) => {
+            const typingStatus = document.getElementById("typingStatus");
+
+            if (data.isTyping && data.user.name !== username) {
+                typingStatus.style.display = "block"; // Mostrar que otro usuario está escribiendo
+            } else {
+                typingStatus.style.display = "none"; // Ocultar cuando no están escribiendo
+            }
+        });
+    </script>
+</body>
+</html>
