@@ -75,6 +75,8 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log("Servidor funcionando en http://localhost:3000");
+puerto = process.env.PORT || 3000;
+
+server.listen(puerto, () => {
+  console.log("Servidor funcionando en http://localhost:"+ puerto);
 });
